@@ -7,7 +7,9 @@ library(igraph)
 
 netmoa <- function(toxid = 'D002995', ngid, ppiscore = 900){
   ### 1.毒物与基因关系
-  dag <- fread('RPackage/CTD_chem_gene_ixns.csv', sep = ',')
+  load(paste0(system.file(package = "ToxDAR"), '/extdata/CTD_toxge.Rdata'))
+  dag <- toxge
+  # dag <- fread('RPackage/CTD_chem_gene_ixns.csv', sep = ',')
   dag <- dag[, c(2, 4, 5, 10, 11)]
 
   # Clofibric Acid  D002995
@@ -42,7 +44,8 @@ netmoa <- function(toxid = 'D002995', ngid, ppiscore = 900){
 
 
   ### 3.PPI网络
-  ppi <- fread('RPackage/PPIdata.csv', sep = ',')
+  load(paste0(system.file(package = "ToxDAR"), '/extdata/STRING_ppi.Rdata'))
+  # ppi <- fread('RPackage/PPIdata.csv', sep = ',')
   nn <- which(ppi$combined_score > ppiscore)
   ppi <- ppi[nn, ]
 

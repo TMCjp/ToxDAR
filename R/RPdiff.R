@@ -32,7 +32,8 @@ diffexp <- function(genexp, groupinfo, org = "hsapiens", toxid = 'C009277'){
 
 
   ### knowledge annotation
-  toxge <- fread('./RPackage/CTD_chem_gene_ixns.csv')
+  # toxge <- fread('./RPackage/CTD_chem_gene_ixns.csv')
+  load(paste0(system.file(package = "ToxDAR"), '/extdata/CTD_toxge.Rdata'))
   nn <- which(toxge$ChemicalID == toxid)
   toxge <- toxge[nn, c('GeneSymbol', 'PubMedIDs')]
 
