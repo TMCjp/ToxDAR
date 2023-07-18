@@ -59,7 +59,7 @@ netmoa <- function(toxid = 'D002995', ngid, ppiscore = 900){
 
 
   ### 4.网络构建
-  mathdag <- mathdag[, c(1,2,5)]
+  mathdag <- mathdag[, c(1,2,4)]
   colnames(mathdag) <- c('From', 'To', 'EV')
   mathgap <- cbind(mathgap, EV='')
   colnames(mathgap) <- c('From', 'To', 'EV')
