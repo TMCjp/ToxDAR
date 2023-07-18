@@ -127,7 +127,7 @@ ESheatmap <- function(esmicro, Normalization=TRUE){
   }
 
 
-  hsako <- fread("RPackage/pathwayclass.csv")
+  hsako <- fread(paste0(system.file(package = "ToxDAR"),"/extdata/pathwayclass.csv"))
 
   nn <- na.omit(match(hsako$id, rownames(esmicro)))
   esmicro <- as.matrix(esmicro[nn, ])

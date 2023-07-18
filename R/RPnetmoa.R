@@ -10,7 +10,8 @@ netmoa <- function(toxid = 'D002995', ngid, ppiscore = 900){
   load(paste0(system.file(package = "ToxDAR"), '/extdata/CTD_toxge.Rdata'))
   dag <- toxge
   # dag <- fread('RPackage/CTD_chem_gene_ixns.csv', sep = ',')
-  dag <- dag[, c(2, 4, 5, 10, 11)]
+  # dag <- dag[, c(2, 4, 5, 10, 11)]
+  dag <- dag[, c(2, 3, 4, 8)]
 
   # Clofibric Acid  D002995
   nn <- which(dag$ChemicalID == toxid)
