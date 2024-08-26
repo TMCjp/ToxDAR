@@ -1,4 +1,4 @@
-ToxDAR
+Tutorial for ToxDAR
 ================
 
 A Workflow Software for Analyzing Toxicologically Relevant Proteomic and Transcriptomic Data, From Data Preprocessing to Toxicological Mechanism Elucidation.
@@ -140,7 +140,8 @@ load(file = paste0(system.file(package = "ToxDAR"), '/extdata/genexp.rdata'))
 > We utilize the ToxDAR software package to normalize the transcriptome data post-TPP exposure using ten different methods, subsequently generating a report on the effects of normalization. These normalization methods are evaluated based on two metrics: AUCVC and mSCC, to select the appropriate normalization method.
 
 ``` r
-### 多种预处理方法
+### Apply ten different preprocessing methods
+# Gather factor data for each preprocessing method
 HG7.norfac <- gatherFactors(genexp, methods = "HG7")[, 1]
 TC.norfac <- gatherFactors(genexp, method = "TC")[, 1]
 ERCC.norfac <- gatherFactors(genexp, method = "ERCC")[, 1]
@@ -152,10 +153,7 @@ TMM.norfac <- gatherFactors(genexp, method = "TMM")[, 1]
 DESeq.norfac <- gatherFactors(genexp, method = "DESeq")[, 1]
 TU.norfac <- gatherFactors(genexp, method = "TU")[, 1]
 
-### 根据标准化计算的factor，将表达谱进行预处理
-norm.matrix <- getNormMatrix(data = genexp, norm.factors = NR.norfac)
-
-### plot auc  几种分析方法的auc比较
+### Compute AUCVC(Area Under the normalized Coefficient of Variation threshold Curve) for different preprocessing methods
 cv_uniform1 <- gatherCVs(data = genexp, nonzeroRatio = 0.5,
                         NR = NR.norfac,
                         DESeq = DESeq.norfac,
@@ -175,11 +173,9 @@ cv_uniform <- as.data.frame(cv_uniform)
 cv_uniform$Cutoff <- as.numeric(cv_uniform$Cutoff)
 cv_uniform$Counts <- as.numeric(cv_uniform$Counts)
 
-### plot
+### Plot Index of AUCVC
 library(ggplot2)
-png(file = "cv3.png", res=300, width=(1200*4.17), height=(960*4.17))
-# plotCVs(cv_uniform, methods=c("NR", "DESeq", "TMM", "TU"),
-#         legend.position=c(.85, .48))
+png(file = "cv.png", res=300, width=(1200*4.17), height=(960*4.17))
 plotCVs(cv_uniform, methods=c("None", "NR", "DESeq", "TMM", "HG7", "TC", "ERCC", "TN", "CR", "UQ", "TU"),
         legend.position=c(1.12, .48))
 dev.off()
@@ -189,7 +185,7 @@ dev.off()
 
 
 ``` r
-### spearman correlation
+### Calculate Spearman’s Rank Correlation Coefficient for different preprocessing methods
 spearman_corr1 <- gatherCors(data= genexp, cor_method="spearman",
                             NR = NR.norfac,
                             DESeq = DESeq.norfac,
@@ -207,18 +203,22 @@ spearman_corr2 <- gatherCors4Matrices(None= genexp, raw_matrix=genexp, cor_metho
                                       pre_ratio=1, lower_trim=0.2, upper_trim=0.6, rounds=10000)
 spearman_corr <- rbind(spearman_corr1, spearman_corr2);
 
-### string to numeric
 spearman_corr <- as.data.frame(spearman_corr)
 spearman_corr$Value <- as.numeric(spearman_corr$Value)
 
-### mSCC
+### Calculate mSCC(median Spearman’s Rank Correlation Coefficient)
 cor.medians <- getCorMedians(spearman_corr)
 
-### plot mSCC
+### Plot mSCC(median Spearman’s Rank Correlation Coefficient) results
+# Save the plot as a high-resolution PNG file
 png(file = "cor3.png", res=300, width=(1200*4.17), height=(960*4.17))
 plotCors(spearman_corr, methods=c("None", "NR", "DESeq", "TMM", "HG7", "TC", "ERCC", "TN", "CR", "UQ", "TU"),
          legend.position=c(1.12, .48));
 dev.off()
+
+### Preprocess expression profiles using the normalized factor matrix
+# Apply normalization using the specified factor matrix from the TU method
+genexp <- getNormMatrix(data = genexp, norm.factors = TU.norfac)
 ```
 <img src = "vignettes/cor4.png" width = "80%" align = "center" />
 <br></br>
@@ -229,7 +229,7 @@ dev.off()
 > We generated PCA plots and violin plots of gene expression distribution for these datasets, allowing us to visually observe the variability both between different experimental groups and within the same group across samples.
 
 ``` r
-### PCA分析，参数 stype是样本分类信息，outpng是逻辑值表示是否输出PCA的结果图
+### Plot the PCA to illustrate the variability between different experimental groups and individual samples within each group.
 gi <- c(rep("control",5), rep("55mg/kg",3), rep("110mg/kg",3), 
         rep("220mg/kg",3), rep("441mg/kg",3), rep("881mg/kg",3))
 pcaresult <- toxPCA(genexp, stype = gi, outpng = T)
@@ -238,7 +238,7 @@ pcaresult <- toxPCA(genexp, stype = gi, outpng = T)
 <br></br>
 
 ``` r
-### 箱线图
+### Create a violin plot to compare data distribution differences between groups
 png(file = "toxVio.png", res=300, width=(1200*3), height=(960*3))
 plotVio(genexp, stype = gi)
 dev.off()
@@ -252,17 +252,18 @@ dev.off()
 > We utilized the differential analysis module of the ToxDAR software package to identify differentially expressed genes associated with TPP exposure at various concentrations and time points. Additionally, the integrated knowledge base within ToxDAR provided clear associations between differentially expressed genes and TPP exposure.
 
 ``` r
-genexp <- expdata[, c(2:6, 19,20,21)]
+genexp <- genexp[, c(1:5, 18,19,20)]
 
-### 差异分析，参数org表示物种信息，toxid表示毒物ID，火山图可以直接标注已知毒物相关基因。差异方向默认是后者比前者
+### Perform differential expression analysis, considering the top 10,000 genes
 gi <- c(rep("control",5), rep("881mg/kg",3))
 diffmat <- diffexp(genexp, groupinfo = gi, ntop = 10000)
 
+### Annotate differential expression results with toxin information
 annomat <- diffanno(diffmat, org = "rnorvegicus", toxid = 'C005445')
-# 交互结果表格
+### Generate an interactive table from the annotated results
 IntTab(diffres = annomat, outhtml = T)
 
-# 火山图，标注了已知与所分析毒物相关的基因
+### Create a volcano plot to visualize genes associated with the analyzed toxin
 library(dplyr)
 png(file = "volanno.png", res=300, width=(960*3), height=(1000*3))
 volanno(diffres = annomat, nodesize = 1.5, annosize = 5, themsize = 24, legend.position = c(0.82, 0.15), legend.size = 12)
@@ -274,17 +275,17 @@ dev.off()
 > To gain a comprehensive understanding of the functions of these genes, we proceeded to perform enrichment analysis on the differentially expressed genes following TPP exposure using multiple annotation datasets including GO, DO, KEGG, and others collected within the software package.
 ``` r
 library(clusterProfiler)
-# 加载数据
+# load data
 gsy <- annomat$Symbol[1:30]
 gis <- gconvert(query = gsy, organism = "hsapiens",
                 target="ENTREZGENE_ACC", mthreshold = Inf, filter_na = TRUE)
 gis <- gis$target
 
-# 功能分析
-# gofact分析，slim可选 go/kegg/do
+### Perform functional enrichment analysis using GO terms
+# The 'slim' parameter specifies the type of ontology (GO/Kegg/DO)
 gomat <- gofact(genes = gis, slim = 'go')
 
-# function bar
+### Generate a bar plot of the top 10 functional categories
 png(file = "funcbar.png", res=300, width=(1200*3), height=(960*3))
 p <- plotfact(gomat, ntop = 10, fillby = "Pval", tn = 30, collimit = c(0, 0.05), xtextsize = 20, stripsize = 18)
 p + theme(axis.text = element_text(size=20), axis.title = element_text(size=30), 
@@ -297,15 +298,16 @@ dev.off()
 
 
 ``` r
-# function circos
-# select 功能条目某一大类
+# Filter for Biological Process (BP) terms from the enrichment results
 tys <- unlist(lapply(gomat$hie, function(x) strsplit(x, '.', fixed = T)[[1]][1]))
 bpmat <- gomat[which(tys == 'BP'), ]
 
+# Generate a chord diagram for the top 5 biological processes
 png(file = "funcchord.png", res=300, width=(2200*3), height=(2000*3))
 plotexpfunc(bpmat, ntop = 5, diffresult = annomat, plottype = 'chord', chord.space = 0.05, gene.space = 0.25, gene.size = 9, process.title = 30, process.label = 28, termcol = 3)
 dev.off()
 
+# Generate a cluster plot for the top 5 biological processes
 png(file = "funccluster.png", res=300, width=(1200*3), height=(1200*3))
 plotexpfunc(bpmat, ntop = 5, diffresult = annomat, plottype = 'cluster')
 dev.off()
@@ -318,7 +320,7 @@ dev.off()
 
 > The ssGSEA method quantifies changes in gene expression profiles as a result of toxic exposure into the activation or inhibition states of biological pathways, revealing the mechanisms by which the organism responds to exposure at a molecular level. The changes are presented visually through enrichment plots and heatmaps for intuitive representation.
 ``` r
-### gsea analysis ES
+# Remove rows with missing gene symbols
 nn <- which(is.na(annomat$Symbol))
 gseamat <- annomat[-nn, ]
 
@@ -331,11 +333,10 @@ names(geneList) <- gid
 
 geneList <- geneList[order(geneList, decreasing = T)]
 
-# gsea分析
+# Perform GSEA analysis using KEGG terms
 gsearesult <- gseafc(geneList, term = "KEGG", minGSSize = 5, maxGSSize = 500)
 
-
-# plot gsea result
+# Plot GSEA results for 'Apoptosis' term
 gsid <- gsearesult$gs_id[which(gsearesult$gs_description == 'Apoptosis')]
 png(file = "gsea_up2.png", res=300, width=(1200*3), height=(960*3))
 plotgsea(gsid, geneList, term = "KEGG")
@@ -346,10 +347,11 @@ dev.off()
 
 
 ``` r
-# plot ES heatmap
+# Extract Enrichment Scores (ES) and convert to matrix
 esmicro <- as.matrix(gsearesult[, 'ES'])
 rownames(esmicro) <- gsearesult$gs_exact_source
 
+# Plot the ES heatmap without normalization
 ESheatmap(esmicro, Normalization = F)
 ```
 <img src = "vignettes/KeggSig.png" width = "80%" align = "center" />
@@ -361,13 +363,15 @@ ESheatmap(esmicro, Normalization = F)
 > We employed the ToxDAR network analysis and annotation module to map the associations between the toxin and key molecules, biological pathways, and phenotypes. Within this network, TPP is linked with biological pathways such as apoptosis and inflammatory responses, indicating that triphenyl phosphate (TPP) may act as a potential endocrine disruptor. It exerts its effects by activating the thyroid hormone receptor β (THRB) molecule, thereby influencing signaling pathways related to apoptosis and inflammatory responses, ultimately adversely affecting thyroid function. 
 
 ``` r
+### Perform network analysis and annotation to map associations between the toxin and key molecules, biological pathways, and phenotypes.
 netmat <- netmoa(toxid = 'C005445', ngid = gis, toppathway = 30, ppiscore = 500)
-# 绘制AOP结果
+
+### Uncomment the following lines to generate and save a static PNG plot of the network
 # png(file = "netmoa.png", res=600, width=(1600*5), height=(1200*5))
 # netplot(netmoa = netmat)
 # dev.off()
 
-### html network
+### Create and Save Interactive Network Visualization
 nethtml <- netplothtml(netmoa = netmat, outtype = 'pdf')
 savehtml(network = nethtml, htmlfile = 'netmoa.html')
 ```

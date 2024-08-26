@@ -1,5 +1,8 @@
-library(NormExpression)
-library(ggplot2)
+# library(NormExpression)
+# library(ggplot2)
+
+#' @import NormExpression
+#' @import ggplot2
 
 nonzeroRatio2AUCVC <- function (data, dataType = c("bk", "sc"), HG7 = NULL,
                                 ERCC = NULL, TN = NULL, TC = NULL, CR = NULL, NR = NULL,

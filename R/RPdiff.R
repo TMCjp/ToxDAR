@@ -1,10 +1,18 @@
-library(limma)
-library(gprofiler2)
-library(ggplot2)
-library(ggrepel)
-library(DT)
-library(htmlwidgets)
-library(dplyr)
+# library(limma)
+# library(gprofiler2)
+# library(ggplot2)
+# library(ggrepel)
+# library(DT)
+# library(htmlwidgets)
+# library(dplyr)
+
+#' @import limma
+#' @import gprofiler2
+#' @import ggplot2
+#' @import ggrepel
+#' @import DT
+#' @import htmlwidgets
+#' @import dplyr
 
 
 diffexp <- function(genexp, groupinfo, ntop = 1000){
